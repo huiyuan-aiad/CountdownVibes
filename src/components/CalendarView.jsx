@@ -11,12 +11,14 @@ const CalendarView = ({ events, onViewChange, view, onDateSelect }) => {
   };
 
   const handleDateClick = (date) => {
+    const hasEvents = events.some(event => 
+      new Date(event.date).toDateString() === date.toDateString()
+    );
+    
     trackFeatureUsage('date_selected', { 
       date: date.toISOString(),
       view: view,
-      hasEvents: events.some(event => 
-        new Date(event.date).toDateString() === date.toDateString()
-      )
+      hasEvents
     });
     
     onDateSelect(date);

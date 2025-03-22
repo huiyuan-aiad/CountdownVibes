@@ -9,7 +9,7 @@ const CountdownForm = ({ onSubmit, categories }) => {
   const [hasReminder, setHasReminder] = useState(false);
   const [notes, setNotes] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const newCountdown = {
@@ -28,8 +28,7 @@ const CountdownForm = ({ onSubmit, categories }) => {
       
       // Track if a reminder was set
       if (hasReminder) {
-        const daysUntilEvent = Math.ceil((new Date(date) - new Date()) / (1000 * 60 * 60 * 24));
-        trackReminderSet(daysUntilEvent);
+        trackReminderSet(3); // Assuming 3 days before event is the default
       }
 
       // Reset form
