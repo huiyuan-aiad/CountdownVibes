@@ -1,29 +1,18 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-// Check if deploying to GitHub Pages
-const isGitHubPages = process.env.GITHUB_ACTIONS || false;
-
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/',
-  server: {
-    open: true
-  },
   build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-    emptyOutDir: true,
-    cssCodeSplit: false,
     rollupOptions: {
       output: {
-        assetFileNames: 'assets/[name].[ext]'
+        manualChunks: {
+          'vendor': ['react', 'react-dom', 'react-router-dom'],
+          'firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
+          'ui': ['lucide-react', 'react-calendar']
+        }
       }
     }
-  },
-  css: {
-    modules: {
-      localsConvention: 'camelCase'
-    }
   }
-});
+})
