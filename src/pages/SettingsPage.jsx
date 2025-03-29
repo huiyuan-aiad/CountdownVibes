@@ -2,13 +2,16 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useCountdown } from '../contexts/CountdownContext';
-import { ArrowLeft, Moon, Sun, Trash2 } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, Trash2, LogOut, User } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const SettingsPage = () => {
   const { theme, toggleTheme } = useTheme();
-  const { categories, deleteCategory, predefinedCategories } = useCountdown();
+  const countdownContext = useCountdown() || {};
+  const { categories = [], deleteCategory, predefinedCategories = [] } = countdownContext;
+  
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
-    // 检查浏览器是否支持通知
+    // Check if browser supports notifications
     if (typeof window !== 'undefined' && 'Notification' in window) {
       return Notification.permission === 'granted';
     }
@@ -16,7 +19,7 @@ const SettingsPage = () => {
   });
   const [error, setError] = useState('');
 
-  // 处理通知权限请求
+  // Handle notification permission request
   const handleNotificationToggle = async () => {
     if (!('Notification' in window)) {
       alert('This browser does not support desktop notifications');
@@ -24,21 +27,52 @@ const SettingsPage = () => {
     }
 
     if (Notification.permission === 'granted') {
-      // 已经有权限，只需切换状态
+      // Already have permission, just toggle state
       setNotificationsEnabled(!notificationsEnabled);
     } else if (Notification.permission !== 'denied') {
-      // 请求权限
+      // Request permission
       const permission = await Notification.requestPermission();
       setNotificationsEnabled(permission === 'granted');
     } else {
-      // 权限被拒绝，提示用户在浏览器设置中启用
+      // Permission denied, prompt user to enable in browser settings
       alert('Please enable notifications in your browser settings');
+    }
+  };
+
+  const auth = useAuth();
+  const signOut = auth?.signOut;
+  const currentUser = auth?.currentUser;
+  
+  const [notification, setNotification] = useState({
+    show: false,
+    message: '',
+    type: 'success'
+  });
+
+  const handleLogout = async () => {
+    if (!signOut) return;
+    
+    try {
+      await signOut();
+      // Redirect happens automatically due to auth state change
+    } catch (error) {
+      console.error("Failed to log out:", error);
+      setNotification({
+        show: true,
+        message: 'Failed to log out. Please try again.',
+        type: 'error'
+      });
+      
+      // Hide notification after 3 seconds
+      setTimeout(() => {
+        setNotification(prev => ({ ...prev, show: false }));
+      }, 3000);
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
-      {/* 返回按钮 */}
+      {/* Back button */}
       <Link to="/" className="inline-flex items-center text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 mb-6">
         <ArrowLeft className="w-5 h-5 mr-2" />
         Back to Home
@@ -47,7 +81,32 @@ const SettingsPage = () => {
       <div className="glass rounded-xl p-6">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">Settings</h1>
 
-        {/* 主题切换 */}
+        {/* User Profile Section - Added */}
+        {currentUser && (
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">User Profile</h2>
+            <div className="glass p-4 rounded-lg">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="bg-primary-100 dark:bg-primary-900 p-2 rounded-full">
+                  <User className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                </div>
+                <div>
+                  <p className="text-gray-800 dark:text-white font-medium">{currentUser.email}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Logged in user</p>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Theme toggle */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">Theme</h2>
           <div className="flex items-center justify-between">
@@ -68,7 +127,7 @@ const SettingsPage = () => {
           </div>
         </div>
 
-        {/* 通知设置 */}
+        {/* Notification settings */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">Notifications</h2>
           <div className="flex items-center justify-between">
@@ -135,12 +194,12 @@ const SettingsPage = () => {
           )}
         </div>
 
-        {/* 关于 */}
+        {/* About */}
         <div>
           <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">About</h2>
           <div className="glass p-4 rounded-lg">
             <h3 className="font-medium text-gray-800 dark:text-white mb-1">Countdown Vibes</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Version 0.1.0</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Version 0.1.1</p>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               A modern countdown app for tracking your important events.
             </p>

@@ -1,208 +1,178 @@
-import { createContext, useState, useContext, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import { 
+  collection, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  getDocs, 
+  query, 
+  where,
+  onSnapshot
+} from 'firebase/firestore';
+import { db } from '../firebase/config';
 
 const CountdownContext = createContext();
 
-export const useCountdown = () => useContext(CountdownContext);
+export function useCountdown() {
+  return useContext(CountdownContext);
+}
 
-export const CountdownProvider = ({ children }) => {
-  // 从localStorage获取倒计时数据，默认为空数组
-  const [countdowns, setCountdowns] = useState(() => {
-    try {
-      const savedCountdowns = localStorage.getItem('countdowns');
-      return savedCountdowns ? JSON.parse(savedCountdowns) : [];
-    } catch (error) {
-      console.error('Error loading countdowns from localStorage:', error);
-      return [];
-    }
-  });
+export function CountdownProvider({ children }) {
+  const [countdowns, setCountdowns] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { currentUser } = useAuth() || {};
 
-  // 预定义的类别
+  // Predefined categories
   const predefinedCategories = [
-    { name: 'Celebrations', color: '#10b981' }, // emerald-500
-    { name: 'Milestones', color: '#3b82f6' },  // blue-500
-    { name: 'Deadlines', color: '#ef4444' },   // red-500
+    { name: 'Celebrations', color: '#10b981' },
+    { name: 'Milestones', color: '#3b82f6' },
+    { name: 'Deadlines', color: '#ef4444' },
   ];
 
-  // 获取所有类别（预定义+自定义）
-  const [categories, setCategories] = useState(() => {
-    try {
-      const savedCategories = localStorage.getItem('categories');
-      return savedCategories 
-        ? JSON.parse(savedCategories) 
-        : predefinedCategories;
-    } catch (error) {
-      console.error('Error loading categories from localStorage:', error);
-      return predefinedCategories;
-    }
-  });
-
-  // 当倒计时数据变化时，保存到localStorage
+  // Load countdowns from Firestore
   useEffect(() => {
-    try {
-      localStorage.setItem('countdowns', JSON.stringify(countdowns));
-    } catch (error) {
-      console.error('Error saving countdowns to localStorage:', error);
-    }
-  }, [countdowns]);
-
-  // 当类别数据变化时，保存到localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem('categories', JSON.stringify(categories));
-    } catch (error) {
-      console.error('Error saving categories to localStorage:', error);
-    }
-  }, [categories]);
-
-  // 添加新倒计时
-  const addCountdown = (countdown) => {
-    const newCountdown = {
-      ...countdown,
-      id: uuidv4(),
-    };
-    setCountdowns([...countdowns, newCountdown]);
-    return newCountdown.id; // 返回新创建的倒计时ID
-  };
-
-  // 更新倒计时
-  const updateCountdown = (id, updatedCountdown) => {
-    setCountdowns(countdowns.map(countdown => 
-      countdown.id === id ? { ...countdown, ...updatedCountdown } : countdown
-    ));
-  };
-
-  // 删除倒计时
-  const deleteCountdown = (id) => {
-    setCountdowns(countdowns.filter(countdown => countdown.id !== id));
-  };
-
-  // 获取单个倒计时
-  const getCountdown = (id) => {
-    return countdowns.find(countdown => countdown.id === id) || null;
-  };
-
-  // 添加新类别
-  const addCategory = (category) => {
-    // 检查类别名称是否已存在
-    if (categories.some(c => c.name === category.name)) {
-      throw new Error(`Category '${category.name}' already exists`);
-    }
-    setCategories([...categories, category]);
-  };
-
-  // 删除类别
-  const deleteCategory = (categoryName) => {
-    // 检查是否为预定义类别
-    if (predefinedCategories.some(c => c.name === categoryName)) {
-      throw new Error('Cannot delete predefined categories');
-    }
-
-    // 检查类别是否正在使用
-    const isInUse = countdowns.some(countdown => countdown.category === categoryName);
-    if (isInUse) {
-      throw new Error('Cannot delete category that is in use');
-    }
-
-    // 删除类别
-    setCategories(categories.filter(c => c.name !== categoryName));
-  };
-
-  // 按类别筛选倒计时
-  const filterByCategory = (categoryName) => {
-    if (!categoryName || categoryName === 'All') {
-      return countdowns;
-    }
-    return countdowns.filter(countdown => countdown.category === categoryName);
-  };
-
-  // 计算倒计时剩余时间
-  const calculateTimeLeft = (dateString) => {
-    const targetDate = new Date(dateString);
-    const now = new Date();
+    setLoading(true);
     
-    // 计算毫秒差值
-    const difference = targetDate - now;
+    // Initialize with predefined categories
+    setCategories([...predefinedCategories]);
     
-    // 如果目标日期已过，返回零值
-    if (difference <= 0) {
-      return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 };
-    }
-    
-    // 计算天、时、分、秒
-    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-    
-    return {
-      days,
-      hours,
-      minutes,
-      seconds,
-      total: difference,
-    };
-  };
-
-  // 检查是否应该发送提醒
-  const checkReminders = () => {
-    // 仅在浏览器环境中执行
-    if (typeof window === 'undefined') return;
-    
-    // 检查浏览器是否支持通知
-    if (!('Notification' in window)) {
-      console.log('This browser does not support notifications');
+    if (!currentUser) {
+      setCountdowns([]);
+      setLoading(false);
       return;
     }
     
-    // 检查每个倒计时
-    countdowns.forEach(countdown => {
-      if (countdown.reminder && countdown.reminderDays > 0) {
-        const timeLeft = calculateTimeLeft(countdown.date);
-        const daysLeft = timeLeft.days;
-        
-        // 如果剩余天数等于提醒天数，发送通知
-        if (daysLeft === countdown.reminderDays) {
-          // 检查通知权限
-          if (Notification.permission === 'granted') {
-            new Notification(`Reminder: ${countdown.title}`, {
-              body: `Only ${daysLeft} days left until ${countdown.title}!`,
-            });
-          } else if (Notification.permission !== 'denied') {
-            // 请求通知权限
-            Notification.requestPermission();
-          }
-        }
-      }
+    const countdownsRef = collection(db, 'countdowns');
+    const userCountdownsQuery = query(countdownsRef, where('userId', '==', currentUser.uid));
+    
+    const unsubscribe = onSnapshot(userCountdownsQuery, (snapshot) => {
+      const countdownsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      setCountdowns(countdownsData);
+      
+      // Extract unique categories from countdowns
+      const uniqueCategories = [...new Set(countdownsData.map(c => c.category))];
+      const customCategories = uniqueCategories
+        .filter(cat => !predefinedCategories.some(pc => pc.name === cat))
+        .map(cat => {
+          const countdown = countdownsData.find(c => c.category === cat);
+          return {
+            name: cat,
+            color: countdown?.color || '#4f46e5'
+          };
+        });
+      
+      setCategories([...predefinedCategories, ...customCategories]);
+      setLoading(false);
     });
+    
+    return unsubscribe;
+  }, [currentUser]);
+
+  // Add a new countdown
+  async function addCountdown(countdownData) {
+    if (!currentUser) {
+      throw new Error('You must be logged in to add a countdown');
+    }
+    
+    try {
+      const docRef = await addDoc(collection(db, 'countdowns'), {
+        ...countdownData,
+        userId: currentUser.uid,
+        createdAt: new Date().toISOString()
+      });
+      
+      return docRef.id;
+    } catch (error) {
+      console.error('Error adding countdown:', error);
+      throw error;
+    }
+  }
+
+  // Update an existing countdown
+  async function updateCountdown(id, countdownData) {
+    if (!currentUser) {
+      throw new Error('You must be logged in to update a countdown');
+    }
+    
+    try {
+      const countdownRef = doc(db, 'countdowns', id);
+      await updateDoc(countdownRef, {
+        ...countdownData,
+        updatedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error updating countdown:', error);
+      throw error;
+    }
+  }
+
+  // Delete a countdown
+  async function deleteCountdown(id) {
+    if (!currentUser) {
+      throw new Error('You must be logged in to delete a countdown');
+    }
+    
+    try {
+      await deleteDoc(doc(db, 'countdowns', id));
+    } catch (error) {
+      console.error('Error deleting countdown:', error);
+      throw error;
+    }
+  }
+
+  // Get a specific countdown by ID
+  function getCountdown(id) {
+    return countdowns.find(countdown => countdown.id === id);
+  }
+
+  // Add a new category
+  function addCategory(categoryData) {
+    // Check if category already exists
+    if (categories.some(cat => cat.name === categoryData.name)) {
+      return; // Category already exists
+    }
+    
+    setCategories(prev => [...prev, categoryData]);
+  }
+
+  // Delete a category
+  function deleteCategory(categoryName) {
+    // Check if category is in use
+    if (countdowns.some(countdown => countdown.category === categoryName)) {
+      throw new Error('Cannot delete a category that is in use');
+    }
+    
+    // Check if it's a predefined category
+    if (predefinedCategories.some(cat => cat.name === categoryName)) {
+      throw new Error('Cannot delete a predefined category');
+    }
+    
+    setCategories(prev => prev.filter(cat => cat.name !== categoryName));
+  }
+
+  const value = {
+    countdowns,
+    categories,
+    predefinedCategories,
+    loading,
+    addCountdown,
+    updateCountdown,
+    deleteCountdown,
+    getCountdown,
+    addCategory,
+    deleteCategory
   };
 
-  // 每天检查一次提醒
-  useEffect(() => {
-    // 立即检查一次
-    checkReminders();
-    
-    // 设置每天检查一次
-    const interval = setInterval(checkReminders, 24 * 60 * 60 * 1000);
-    
-    return () => clearInterval(interval);
-  }, [countdowns]); // 当倒计时数据变化时重新检查
-
   return (
-    <CountdownContext.Provider value={{
-      countdowns,
-      categories,
-      predefinedCategories,
-      addCountdown,
-      updateCountdown,
-      deleteCountdown,
-      getCountdown,
-      addCategory,
-      deleteCategory,
-      filterByCategory,
-      calculateTimeLeft,
-    }}>
+    <CountdownContext.Provider value={value}>
       {children}
     </CountdownContext.Provider>
   );
-};
+}

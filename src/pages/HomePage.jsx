@@ -5,23 +5,50 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Plus, Calendar, Settings, Search } from 'lucide-react';
 
 const HomePage = () => {
-  const { countdowns, categories, filterByCategory, calculateTimeLeft } = useCountdown();
   const { theme } = useTheme();
+  const { countdowns, categories } = useCountdown() || { countdowns: [], categories: [] };
   
-  // 状态
-  const [activeCategory, setActiveCategory] = useState('All');
+  // Use a single state for filters
+  const [filters, setFilters] = useState({
+    category: 'All',
+    search: ''
+  });
+  
   const [filteredCountdowns, setFilteredCountdowns] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [timeLeft, setTimeLeft] = useState({});
   
-  // 当类别或搜索词变化时，过滤倒计时
-  useEffect(() => {
-    // 首先按类别过滤
-    let filtered = filterByCategory(activeCategory === 'All' ? null : activeCategory);
+  // Define the filterByCategory function that was missing
+  const filterByCategory = (category) => {
+    if (!category) return countdowns || [];
+    return (countdowns || []).filter(countdown => countdown.category === category);
+  };
+  
+  // Calculate time left function
+  const calculateTimeLeft = (dateString) => {
+    const targetDate = new Date(dateString);
+    const now = new Date();
+    const difference = targetDate - now;
     
-    // 然后按搜索词过滤
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
+    if (difference <= 0) {
+      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    }
+    
+    return {
+      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((difference / 1000 / 60) % 60),
+      seconds: Math.floor((difference / 1000) % 60)
+    };
+  };
+  
+  // When filters change, update filteredCountdowns
+  useEffect(() => {
+    // First filter by category
+    let filtered = filterByCategory(filters.category === 'All' ? null : filters.category);
+    
+    // Then filter by search term
+    if (filters.search.trim()) {
+      const term = filters.search.toLowerCase();
       filtered = filtered.filter(countdown => 
         countdown.title.toLowerCase().includes(term) ||
         countdown.notes?.toLowerCase().includes(term)
@@ -29,11 +56,10 @@ const HomePage = () => {
     }
     
     setFilteredCountdowns(filtered);
-  }, [activeCategory, searchTerm, countdowns, filterByCategory]);
+  }, [filters, countdowns]);
   
-  // 实时更新倒计时
+  // Update time left for countdowns
   useEffect(() => {
-    // 初始计算
     const calculateAllTimeLeft = () => {
       const newTimeLeft = {};
       filteredCountdowns.forEach(countdown => {
@@ -44,31 +70,35 @@ const HomePage = () => {
     
     calculateAllTimeLeft();
     
-    // 每秒更新一次
     const interval = setInterval(calculateAllTimeLeft, 1000);
-    
     return () => clearInterval(interval);
-  }, [filteredCountdowns, calculateTimeLeft]);
+  }, [filteredCountdowns]);
   
-  // 处理搜索输入
+  // Handle search input
   const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
+    setFilters(prev => ({
+      ...prev,
+      search: e.target.value
+    }));
   };
   
-  // 处理类别切换
+  // Handle category change
   const handleCategoryChange = (category) => {
-    setActiveCategory(category);
+    setFilters(prev => ({
+      ...prev,
+      category
+    }));
   };
   
-  // 获取类别对应的颜色
+  // Get category color
   const getCategoryColor = (categoryName) => {
     const category = categories.find(cat => cat.name === categoryName);
-    return category ? category.color : '#4f46e5'; // 默认使用主色
+    return category ? category.color : '#4f46e5';
   };
   
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* 头部 */}
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Countdown Vibes</h1>
         <div className="flex space-x-2">
@@ -81,11 +111,11 @@ const HomePage = () => {
         </div>
       </div>
       
-      {/* 搜索栏 */}
+      {/* Search bar */}
       <div className="relative mb-6">
         <input
           type="text"
-          value={searchTerm}
+          value={filters.search}
           onChange={handleSearchChange}
           placeholder="Search countdowns..."
           className="w-full px-4 py-2 pl-10 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -93,11 +123,11 @@ const HomePage = () => {
         <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
       </div>
       
-      {/* 类别过滤器 */}
+      {/* Category filters */}
       <div className="flex flex-wrap gap-2 mb-6 overflow-x-auto pb-2">
         <button
           onClick={() => handleCategoryChange('All')}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeCategory === 'All' ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filters.category === 'All' ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
         >
           All
         </button>
@@ -105,15 +135,15 @@ const HomePage = () => {
           <button
             key={category.name}
             onClick={() => handleCategoryChange(category.name)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeCategory === category.name ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
-            style={activeCategory === category.name ? {} : { borderLeft: `3px solid ${category.color}` }}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filters.category === category.name ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+            style={filters.category === category.name ? {} : { borderLeft: `3px solid ${category.color}` }}
           >
             {category.name}
           </button>
         ))}
       </div>
       
-      {/* 倒计时网格 */}
+      {/* Countdown grid */}
       {filteredCountdowns.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCountdowns.map(countdown => {

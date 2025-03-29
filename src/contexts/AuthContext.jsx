@@ -1,60 +1,49 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth } from '../firebase/config';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { 
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
   signOut as firebaseSignOut,
-  onAuthStateChanged
+  onAuthStateChanged 
 } from 'firebase/auth';
+import { auth } from '../firebase/config';
 
 const AuthContext = createContext();
 
-export const useAuth = () => {
+export function useAuth() {
   return useContext(AuthContext);
-};
+}
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+export function AuthProvider({ children }) {
+  const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  function signup(email, password) {
+    return createUserWithEmailAndPassword(auth, email, password);
+  }
+
+  function login(email, password) {
+    return signInWithEmailAndPassword(auth, email, password);
+  }
+
+  function signOut() {
+    return firebaseSignOut(auth);
+  }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+      setCurrentUser(user);
       setLoading(false);
     });
 
     return unsubscribe;
   }, []);
 
-  const signIn = async (email, password) => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const signUp = async (email, password) => {
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const signOut = async () => {
-    try {
-      await firebaseSignOut(auth);
-    } catch (error) {
-      throw error;
-    }
-  };
-
   const value = {
-    user,
-    signIn,
-    signUp,
-    signOut
+    currentUser,
+    signup,
+    login,
+    signOut,
+    loading
   };
 
   return (
@@ -62,4 +51,4 @@ export const AuthProvider = ({ children }) => {
       {!loading && children}
     </AuthContext.Provider>
   );
-}; 
+}

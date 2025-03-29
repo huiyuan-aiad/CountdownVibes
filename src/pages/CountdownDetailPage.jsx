@@ -6,48 +6,71 @@ import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
 const CountdownDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getCountdown, deleteCountdown, calculateTimeLeft } = useCountdown();
+  const countdownContext = useCountdown() || {};
+  const { getCountdown, deleteCountdown } = countdownContext;
   
   const [countdown, setCountdown] = useState(null);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   
-  // 加载倒计时数据
+  // Load countdown data
   useEffect(() => {
+    if (!getCountdown) return;
+    
     const countdownData = getCountdown(id);
     if (countdownData) {
       setCountdown(countdownData);
     } else {
-      // 如果找不到倒计时，重定向到主页
+      // If countdown not found, redirect to home
       navigate('/');
     }
   }, [id, getCountdown, navigate]);
   
-  // 实时更新倒计时
+  // Calculate time left function
+  const calculateTimeLeft = (dateString) => {
+    const targetDate = new Date(dateString);
+    const now = new Date();
+    const difference = targetDate - now;
+    
+    if (difference <= 0) {
+      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    }
+    
+    return {
+      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((difference / 1000 / 60) % 60),
+      seconds: Math.floor((difference / 1000) % 60)
+    };
+  };
+  
+  // Real-time countdown update
   useEffect(() => {
     if (!countdown) return;
     
-    // 初始计算
+    // Initial calculation
     const updateTimeLeft = () => {
       setTimeLeft(calculateTimeLeft(countdown.date));
     };
     
     updateTimeLeft();
     
-    // 每秒更新一次
+    // Update every second
     const interval = setInterval(updateTimeLeft, 1000);
     
     return () => clearInterval(interval);
-  }, [countdown, calculateTimeLeft]);
+  }, [countdown]);
   
-  // 处理删除倒计时
+  // Handle delete countdown
   const handleDelete = () => {
+    if (!deleteCountdown) return;
+    
     if (window.confirm('Are you sure you want to delete this countdown?')) {
       deleteCountdown(id);
       navigate('/');
     }
   };
   
-  // 如果倒计时数据尚未加载，显示加载状态
+  // If countdown data not loaded yet, show loading state
   if (!countdown) {
     return (
       <div className="container mx-auto px-4 py-8 flex justify-center items-center">
@@ -58,7 +81,7 @@ const CountdownDetailPage = () => {
     );
   }
   
-  // 格式化日期
+  // Format date
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
@@ -73,14 +96,14 @@ const CountdownDetailPage = () => {
   
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
-      {/* 返回按钮 */}
+      {/* Back button */}
       <Link to="/" className="inline-flex items-center text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 mb-6">
         <ArrowLeft className="w-5 h-5 mr-2" />
         Back to Home
       </Link>
       
       <div className="glass rounded-xl p-6 md:p-8">
-        {/* 标题和操作按钮 */}
+        {/* Title and action buttons */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-4 md:mb-0">
             {countdown.title}
@@ -104,7 +127,7 @@ const CountdownDetailPage = () => {
           </div>
         </div>
         
-        {/* 倒计时显示 */}
+        {/* Countdown display */}
         <div className="mb-8">
           <div className="grid grid-cols-4 gap-2 text-center">
             <div className="glass rounded-lg p-3">
@@ -134,7 +157,7 @@ const CountdownDetailPage = () => {
           </div>
         </div>
         
-        {/* 详细信息 */}
+        {/* Details */}
         <div className="space-y-4">
           <div>
             <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Date & Time</h2>
