@@ -3,7 +3,8 @@ import {
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signOut as firebaseSignOut,
-  onAuthStateChanged 
+  onAuthStateChanged,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
 
@@ -29,6 +30,18 @@ export function AuthProvider({ children }) {
     return firebaseSignOut(auth);
   }
 
+  function resetPassword(email) {
+    // Configure action code settings for password reset
+    const actionCodeSettings = {
+      // URL you want to redirect back to after password reset
+      url: window.location.origin + '/login',
+      // This must be true for the redirect to work properly
+      handleCodeInApp: true
+    };
+    
+    return sendPasswordResetEmail(auth, email, actionCodeSettings);
+  }
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
@@ -43,6 +56,7 @@ export function AuthProvider({ children }) {
     signup,
     login,
     signOut,
+    resetPassword,
     loading
   };
 

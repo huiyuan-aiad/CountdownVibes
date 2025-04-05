@@ -3,6 +3,7 @@ import { useAuth } from './contexts/AuthContext';
 import './App.css';
 import Login from './components/Login';
 import SignUp from './components/SignUp';
+import ForgotPassword from './components/ForgotPassword';
 import FirebaseTest from './components/FirebaseTest';
 import CalendarViewPage from './pages/CalendarViewPage';
 import HomePage from './pages/HomePage';
@@ -73,6 +74,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/calendar" element={<CalendarViewPage />} />
           <Route path="/add" element={<AddCountdownPage />} />
           <Route path="/edit/:id" element={<AddCountdownPage />} />
