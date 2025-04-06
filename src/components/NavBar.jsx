@@ -2,11 +2,11 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 function NavBar() {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, signOut } = useAuth();
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await signOut();
     } catch (error) {
       console.error('Failed to log out:', error);
     }
@@ -78,4 +78,4 @@ function NavBar() {
   );
 }
 
-export default NavBar; 
+export default NavBar;

@@ -13,7 +13,9 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
-const CountdownContext = createContext();
+
+// Create the context
+export const CountdownContext = createContext();
 
 export function useCountdown() {
   return useContext(CountdownContext);
