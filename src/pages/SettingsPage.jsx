@@ -2,15 +2,19 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useCountdown } from '../contexts/CountdownContext';
-import { ArrowLeft, Moon, Sun, Trash2, LogOut, User, Music } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, Trash2, LogOut, User, Music, Plus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 // Removed useApi import as the Ticketmaster toggle is no longer needed
 
 const SettingsPage = () => {
   const { theme, toggleTheme } = useTheme();
   const countdownContext = useCountdown() || {};
-  const { categories = [], deleteCategory, predefinedCategories = [] } = countdownContext;
+  const { categories = [], deleteCategory, predefinedCategories = [], addCategory } = countdownContext;
   // Removed useTicketmaster and toggleTicketmaster as they're no longer needed
+  
+  // State for custom category creation
+  const [customCategory, setCustomCategory] = useState('');
+  const [selectedColor, setSelectedColor] = useState('#10b981');
   
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
     // Check if browser supports notifications
@@ -51,6 +55,46 @@ const SettingsPage = () => {
     type: 'success'
   });
 
+  // Handle adding a new category
+  const handleAddCategory = () => {
+    if (!customCategory.trim() || !selectedColor) {
+      setError('Category name and color are required');
+      return;
+    }
+    
+    // Check if category already exists
+    if (categories.some(cat => cat.name === customCategory)) {
+      setError('A category with this name already exists');
+      return;
+    }
+    
+    try {
+      addCategory({
+        name: customCategory,
+        color: selectedColor
+      });
+      
+      // Reset form
+      setCustomCategory('');
+      setSelectedColor('#10b981');
+      setError('');
+      
+      // Show success notification
+      setNotification({
+        show: true,
+        message: 'Category added successfully',
+        type: 'success'
+      });
+      
+      // Hide notification after 3 seconds
+      setTimeout(() => {
+        setNotification(prev => ({ ...prev, show: false }));
+      }, 3000);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const handleLogout = async () => {
     if (!signOut) return;
     
@@ -74,6 +118,12 @@ const SettingsPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
+      {/* Notification */}
+      {notification.show && (
+        <div className={`fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
+          {notification.message}
+        </div>
+      )}
       {/* Back button */}
       <Link to="/" className="inline-flex items-center text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 mb-6">
         <ArrowLeft className="w-5 h-5 mr-2" />
@@ -158,6 +208,82 @@ const SettingsPage = () => {
         {/* Category Management */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">Category Management</h2>
+          
+          {/* Add Custom Category Form */}
+          <div className="glass p-4 rounded-lg mb-4">
+            <h3 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-3">Add Custom Category</h3>
+            <div className="space-y-3">
+              <div>
+                <label htmlFor="customCategory" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Category Name
+                </label>
+                <input
+                  type="text"
+                  id="customCategory"
+                  value={customCategory || ''}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="Enter custom category name"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Category Color
+                </label>
+                <div className="color-picker-container mt-2">
+                  <div className="flex flex-wrap gap-3 justify-center">
+                    {[
+                      '#10b981', // emerald-500
+                      '#3b82f6', // blue-500
+                      '#ef4444', // red-500
+                      '#f59e0b', // amber-500
+                      '#8b5cf6', // violet-500
+                      '#ec4899', // pink-500
+                      '#06b6d4', // cyan-500
+                      '#84cc16', // lime-500
+                      '#6366f1', // indigo-500
+                      '#14b8a6', // teal-500
+                      '#f97316', // orange-500
+                      '#d946ef'  // fuchsia-500
+                    ].map(color => (
+                      <div 
+                        key={color} 
+                        onClick={() => setSelectedColor(color)}
+                        className={`color-circle w-12 h-12 rounded-full cursor-pointer flex items-center justify-center transition-all ${selectedColor === color ? 'ring-2 ring-offset-2 ring-gray-700 dark:ring-gray-300 scale-110' : 'hover:scale-105'}`}
+                        style={{ backgroundColor: color }}
+                      >
+                        {selectedColor === color && (
+                          <div className="text-white text-xs font-medium">
+                            ✓
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 text-center">
+                    {selectedColor && customCategory && (
+                      <div className="inline-block px-3 py-1 rounded-full text-white text-sm" style={{ backgroundColor: selectedColor }}>
+                        {customCategory}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-end mt-3">
+                <button
+                  onClick={handleAddCategory}
+                  disabled={!customCategory || !selectedColor}
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Add Category
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Category List */}
           <div className="space-y-3">
             {categories.map(category => {
               const isPredefined = predefinedCategories.some(c => c.name === category.name);

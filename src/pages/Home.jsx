@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { CountdownContext } from '../contexts/CountdownContext';
 import { Plus, Calendar, Settings } from 'lucide-react';
@@ -8,16 +8,57 @@ import NavBar from '../components/NavBar';
 const Home = () => {
   const { countdowns, categories } = useContext(CountdownContext);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [timeLeft, setTimeLeft] = useState({});
+  const [sortedCountdowns, setSortedCountdowns] = useState([]);
+  
+  // Filter and sort countdowns when dependencies change
+  useEffect(() => {
+    // Filter countdowns by category
+    const filteredCountdowns = selectedCategory === 'All' 
+      ? countdowns 
+      : countdowns.filter(countdown => countdown.category === selectedCategory);
 
-  // Filter countdowns by category
-  const filteredCountdowns = selectedCategory === 'All' 
-    ? countdowns 
-    : countdowns.filter(countdown => countdown.category === selectedCategory);
-
-  // Sort countdowns by date (closest first)
-  const sortedCountdowns = [...filteredCountdowns].sort((a, b) => {
-    return new Date(a.date) - new Date(b.date);
-  });
+    // Sort countdowns by date (closest first)
+    const sorted = [...filteredCountdowns].sort((a, b) => {
+      return new Date(a.date) - new Date(b.date);
+    });
+    
+    setSortedCountdowns(sorted);
+  }, [countdowns, selectedCategory]);
+  
+  // Calculate time left function
+  const calculateTimeLeft = (dateString) => {
+    const targetDate = new Date(dateString);
+    const now = new Date();
+    const difference = targetDate - now;
+    
+    if (difference <= 0) {
+      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    }
+    
+    return {
+      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((difference / 1000 / 60) % 60),
+      seconds: Math.floor((difference / 1000) % 60)
+    };
+  };
+  
+  // Update time left for countdowns
+  useEffect(() => {
+    const calculateAllTimeLeft = () => {
+      const newTimeLeft = {};
+      sortedCountdowns.forEach(countdown => {
+        newTimeLeft[countdown.id] = calculateTimeLeft(countdown.date);
+      });
+      setTimeLeft(newTimeLeft);
+    };
+    
+    calculateAllTimeLeft();
+    
+    const interval = setInterval(calculateAllTimeLeft, 1000);
+    return () => clearInterval(interval);
+  }, [sortedCountdowns]);
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
@@ -78,6 +119,15 @@ const Home = () => {
               className="bg-white dark:bg-gray-800 backdrop-blur-md bg-opacity-80 dark:bg-opacity-80 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
             >
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{countdown.title}</h2>
+              <div className="mb-2">
+                <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                  {timeLeft[countdown.id]?.days || 0}
+                  <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">days</span>
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {timeLeft[countdown.id]?.hours || 0}h {timeLeft[countdown.id]?.minutes || 0}m {timeLeft[countdown.id]?.seconds || 0}s
+                </div>
+              </div>
               <p className="text-gray-600 dark:text-gray-300">
                 {new Date(countdown.date).toLocaleDateString()}
               </p>

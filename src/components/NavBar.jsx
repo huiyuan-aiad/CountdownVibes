@@ -29,12 +29,6 @@ function NavBar() {
                 <span className="text-sm text-gray-700 dark:text-gray-300">
                   {currentUser.email}
                 </span>
-                <Link
-                  to="/profile"
-                  className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-                >
-                  Profile
-                </Link>
                 <button
                   onClick={handleLogout}
                   className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
@@ -58,19 +52,6 @@ function NavBar() {
                 </Link>
               </>
             )}
-            <button
-              className="p-2 rounded-md text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:text-gray-400 dark:hover:text-white"
-              onClick={() => document.documentElement.classList.toggle('dark')}
-            >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                />
-              </svg>
-            </button>
           </div>
         </div>
       </div>

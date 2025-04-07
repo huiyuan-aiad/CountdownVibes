@@ -7,6 +7,7 @@ import Settings from '../pages/Settings';
 import NotFound from '../pages/NotFound';
 import Login from '../components/Login';
 import SignUp from '../components/SignUp';
+import CalendarViewPage from '../pages/CalendarViewPage';
 
 const AppRoutes = () => {
   return (
@@ -18,6 +19,7 @@ const AppRoutes = () => {
       <Route path="/settings" element={<Settings />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
+      <Route path="/calendar" element={<CalendarViewPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
