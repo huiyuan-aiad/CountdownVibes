@@ -4,13 +4,13 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useCountdown } from '../contexts/CountdownContext';
 import { ArrowLeft, Moon, Sun, Trash2, LogOut, User, Music } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { useApi } from '../contexts/ApiContext';
+// Removed useApi import as the Ticketmaster toggle is no longer needed
 
 const SettingsPage = () => {
   const { theme, toggleTheme } = useTheme();
   const countdownContext = useCountdown() || {};
   const { categories = [], deleteCategory, predefinedCategories = [] } = countdownContext;
-  const { useTicketmaster, toggleTicketmaster } = useApi();
+  // Removed useTicketmaster and toggleTicketmaster as they're no longer needed
   
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
     // Check if browser supports notifications
@@ -153,27 +153,7 @@ const SettingsPage = () => {
           )}
         </div>
 
-        {/* API Settings - Added */}
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">API Settings</h2>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600 dark:text-gray-400">
-              Use Ticketmaster API for event searches
-            </span>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                className="sr-only peer"
-                checked={useTicketmaster}
-                onChange={toggleTicketmaster}
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-            </label>
-          </div>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            When enabled, the chatbot will use Ticketmaster API to search for real events. When disabled, it will provide general AI responses.
-          </p>
-        </div>
+        {/* API Settings section removed as AI model will automatically determine when to use external tools */}
 
         {/* Category Management */}
         <div className="mb-6">

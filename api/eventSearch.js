@@ -4,6 +4,17 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Check if this is a configuration check request
+    if (req.body.configCheck) {
+      // Check for API key
+      const apiKey = process.env.TICKETMASTER_API_KEY;
+      if (!apiKey) {
+        console.error('Ticketmaster API key is missing');
+        return res.status(500).json({ error: 'API configuration error' });
+      }
+      return res.status(200).json({ configured: true });
+    }
+    
     const { query, location, eventType, startDate, endDate } = req.body;
     
     // Check for API key
@@ -72,18 +83,24 @@ export default async function handler(req, res) {
       const startDateTime = new Date(startDate);
       // Ensure valid date
       if (!isNaN(startDateTime.getTime())) {
-        params.append('startDateTime', startDateTime.toISOString());
+        // Format date as YYYY-MM-DDTHH:mm:ssZ (Ticketmaster required format)
+        const formattedDate = startDateTime.toISOString().split('.')[0] + 'Z';
+        params.append('startDateTime', formattedDate);
       }
     } else {
       // Default to current date if no start date provided
-      params.append('startDateTime', new Date().toISOString());
+      const now = new Date();
+      const formattedDate = now.toISOString().split('.')[0] + 'Z';
+      params.append('startDateTime', formattedDate);
     }
     
     if (endDate) {
       const endDateTime = new Date(endDate);
       // Ensure valid date
       if (!isNaN(endDateTime.getTime())) {
-        params.append('endDateTime', endDateTime.toISOString());
+        // Format date as YYYY-MM-DDTHH:mm:ssZ (Ticketmaster required format)
+        const formattedDate = endDateTime.toISOString().split('.')[0] + 'Z';
+        params.append('endDateTime', formattedDate);
       }
     }
     

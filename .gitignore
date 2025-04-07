@@ -72,3 +72,6 @@ DESIGN_GUIDE.md
 
 # Documentation files
 Comprehensive Consolidated Countdown App.md
+
+# Vite temporary config files
+vite.config.*.timestamp-*.mjs
