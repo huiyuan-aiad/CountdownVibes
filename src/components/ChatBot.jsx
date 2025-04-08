@@ -451,15 +451,8 @@ const ChatBot = () => {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-50">
-      {/* Chat toggle button */}
-      <button
-        onClick={toggleChat}
-        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-3 shadow-lg transition-all duration-300"
-        aria-label="Open chat"
-      >
-        <MessageSquare size={24} />
-      </button>
+    <div className="relative z-50">
+      {/* Chat Toggle Button removed as it's now in the bottom navigation bar */}
       
       {/* Chat window */}
       {isOpen && (

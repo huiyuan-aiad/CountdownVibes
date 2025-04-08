@@ -1,12 +1,14 @@
 import { useContext, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2, Mail } from 'lucide-react';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { CountdownContext } from '../contexts/CountdownContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const Settings = () => {
   const { theme, toggleTheme } = useContext(ThemeContext);
   const { categories, deleteCategory, predefinedCategories = [] } = useContext(CountdownContext);
+  const { currentUser } = useAuth();
   
   // State for error messages
   const [error, setError] = useState('');
@@ -59,6 +61,13 @@ const Settings = () => {
       
       {/* Settings */}
       <div className="bg-white dark:bg-gray-800 backdrop-blur-md bg-opacity-80 dark:bg-opacity-80 rounded-lg shadow-md p-6">
+        {/* User Email Display */}
+        {currentUser && (
+          <div className="flex items-center py-3 mb-3 border-b border-gray-200 dark:border-gray-700">
+            <Mail size={20} className="text-indigo-600 dark:text-indigo-400 mr-2" />
+            <span className="text-gray-800 dark:text-white font-medium">{currentUser.email}</span>
+          </div>
+        )}
         <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
           <span className="text-gray-800 dark:text-white font-medium">Dark Mode</span>
           <label className="relative inline-flex items-center cursor-pointer">

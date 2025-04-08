@@ -1,9 +1,8 @@
 import { useState, useContext, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { CountdownContext } from '../contexts/CountdownContext';
-import { Plus, Calendar, Settings } from 'lucide-react';
+import { Plus, Calendar } from 'lucide-react';
 import ChatBot from '../components/ChatBot';
-import NavBar from '../components/NavBar';
 
 const Home = () => {
   const { countdowns, categories } = useContext(CountdownContext);
@@ -62,18 +61,12 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
-      {/* NavBar */}
-      <NavBar />
-      
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 backdrop-blur-md bg-opacity-80 dark:bg-opacity-80 rounded-lg shadow-md p-4 mb-6 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Countdown Vibes</h1>
         <div className="flex space-x-2">
           <Link to="/calendar" className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
             <Calendar className="w-6 h-6 text-gray-600 dark:text-gray-300" />
-          </Link>
-          <Link to="/settings" className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            <Settings className="w-6 h-6 text-gray-600 dark:text-gray-300" />
           </Link>
         </div>
       </header>
@@ -141,26 +134,13 @@ const Home = () => {
           ))
         ) : (
           <div className="col-span-full text-center py-10">
-            <p className="text-gray-500 dark:text-gray-400 mb-4">No events yet...</p>
-            <Link
-              to="/add"
-              className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-            >
-              <Plus size={18} className="mr-1" />
-              Add Event
-            </Link>
+            <p className="text-gray-500 dark:text-gray-400">No events yet...</p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Use the + button below to add your first event</p>
           </div>
         )}
       </div>
 
-      {/* Floating Add Button */}
-      <Link
-        to="/add"
-        className="fixed bottom-20 right-5 bg-indigo-600 text-white rounded-full p-3 shadow-lg hover:bg-indigo-700"
-        aria-label="Add countdown"
-      >
-        <Plus size={24} />
-      </Link>
+      {/* Floating Add Button removed as it's now in the BottomNavBar */}
       
       {/* ChatBot Component */}
       <ChatBot />
