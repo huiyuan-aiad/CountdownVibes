@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useContext } from 'react';
 import { CountdownContext } from '../contexts/CountdownContext';
 import { X, Send, MessageSquare, Calendar, Plus } from 'lucide-react';
 import EventSearchResults from './EventSearchResults';
+import { useLocation } from 'react-router-dom';
 // Removed useApi import as the Ticketmaster toggle is no longer needed
 // Added AbortSignal.timeout polyfill for browsers that don't support it
 if (!AbortSignal.timeout) {
@@ -13,7 +14,10 @@ if (!AbortSignal.timeout) {
 }
 
 const ChatBot = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  // Check if the current path is /chat to determine if opened from bottom nav
+  const location = useLocation();
+  const isOpenedFromBottomNav = location.pathname === '/chat';
+  const [isOpen, setIsOpen] = useState(isOpenedFromBottomNav);
   const [message, setMessage] = useState('');
   const [chatHistory, setChatHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,6 +25,9 @@ const ChatBot = () => {
   const { countdowns, addCountdown } = useContext(CountdownContext);
   // Removed useTicketmaster reference as AI will automatically determine when to use external tools
   const chatContainerRef = useRef(null);
+  
+  // Store the initial value of isOpenedFromBottomNav to ensure consistency
+  const wasOpenedFromBottomNav = useRef(isOpenedFromBottomNav);
 
   // Auto-scroll to bottom of chat
   useEffect(() => {
@@ -28,6 +35,22 @@ const ChatBot = () => {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [chatHistory, searchResults]);
+  
+  // Update isOpen state when location changes
+  useEffect(() => {
+    setIsOpen(isOpenedFromBottomNav);
+    // Store the initial open state to maintain consistency
+    if (isOpenedFromBottomNav) {
+      wasOpenedFromBottomNav.current = true;
+    }
+  }, [isOpenedFromBottomNav]);
+  
+  // Ensure wasOpenedFromBottomNav is updated when the path changes
+  useEffect(() => {
+    if (location.pathname === '/chat') {
+      wasOpenedFromBottomNav.current = true;
+    }
+  }, [location.pathname]);
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
@@ -452,7 +475,16 @@ const ChatBot = () => {
 
   return (
     <div className="relative z-50">
-      {/* Chat Toggle Button removed as it's now in the bottom navigation bar */}
+      {/* Chat toggle button - only show when not opened from bottom nav and not on chat route */}
+      {!wasOpenedFromBottomNav.current && location.pathname !== '/chat' && (
+        <button
+          onClick={toggleChat}
+          className="fixed bottom-24 right-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-3 shadow-lg z-50"
+          aria-label="Open chat"
+        >
+          <MessageSquare size={20} />
+        </button>
+      )}
       
       {/* Chat window */}
       {isOpen && (

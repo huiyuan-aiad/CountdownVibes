@@ -38,9 +38,8 @@ const BottomNavBar = () => {
               onClick={(e) => {
                 // Prevent default navigation since ChatBot is a modal
                 e.preventDefault();
-                // Find and click the ChatBot toggle button
-                const chatBotButton = document.querySelector('[aria-label="Open chat"]');
-                if (chatBotButton) chatBotButton.click();
+                // Navigate to /chat to trigger the ChatBot to open
+                navigate('/chat');
               }}
             >
               <MessageSquare size={24} />

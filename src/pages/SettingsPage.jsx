@@ -2,15 +2,15 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useCountdown } from '../contexts/CountdownContext';
-import { ArrowLeft, Moon, Sun, Trash2, LogOut, User, Music, Plus } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, Trash2, LogOut, User, Music, Plus, Ticket } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-// Removed useApi import as the Ticketmaster toggle is no longer needed
+import { useApi } from '../contexts/ApiContext';
 
 const SettingsPage = () => {
   const { theme, toggleTheme } = useTheme();
   const countdownContext = useCountdown() || {};
   const { categories = [], deleteCategory, predefinedCategories = [], addCategory } = countdownContext;
-  // Removed useTicketmaster and toggleTicketmaster as they're no longer needed
+  const { useTicketmaster, toggleTicketmaster } = useApi() || {}; // Add back the Ticketmaster API toggle
   
   // State for custom category creation
   const [customCategory, setCustomCategory] = useState('');
@@ -203,7 +203,52 @@ const SettingsPage = () => {
           )}
         </div>
 
-        {/* API Settings section removed as AI model will automatically determine when to use external tools */}
+        {/* Default Reminder Days */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">Default Reminder Days</h2>
+          <div className="glass p-4 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-gray-600 dark:text-gray-400">
+                Days before event to send reminder
+              </span>
+              <span className="text-gray-700 dark:text-gray-300 font-medium">1 day</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="30"
+              defaultValue="1"
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+            />
+          </div>
+        </div>
+
+        {/* API Settings */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">API Settings</h2>
+          <div className="glass p-4 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="bg-purple-100 dark:bg-purple-900 p-2 rounded-full">
+                  <Ticket className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <span className="text-gray-700 dark:text-gray-300">Use Ticketmaster API for event searches</span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Enable to search for real events in the chatbot</p>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={useTicketmaster}
+                  onChange={toggleTicketmaster}
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+              </label>
+            </div>
+          </div>
+        </div>
 
         {/* Category Management */}
         <div className="mb-6">
