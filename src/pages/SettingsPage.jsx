@@ -10,7 +10,7 @@ const SettingsPage = () => {
   const { theme, toggleTheme } = useTheme();
   const countdownContext = useCountdown() || {};
   const { categories = [], deleteCategory, predefinedCategories = [], addCategory } = countdownContext;
-  const { useTicketmaster, toggleTicketmaster } = useApi() || {}; // Add back the Ticketmaster API toggle
+  const { useTicketmaster = false, toggleTicketmaster = () => {} } = useApi() || {};
   
   // State for custom category creation
   const [customCategory, setCustomCategory] = useState('');
