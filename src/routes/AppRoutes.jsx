@@ -14,6 +14,7 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/chat" element={<Home />} /> {/* Added route for chat to trigger ChatBot */}
       <Route path="/countdown/:id" element={<CountdownDetail />} />
       <Route path="/add" element={<AddCountdown />} />
       <Route path="/edit/:id" element={<EditCountdown />} />
