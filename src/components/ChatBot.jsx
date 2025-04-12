@@ -488,7 +488,7 @@ const ChatBot = () => {
       
       {/* Chat window */}
       {isOpen && (
-        <div className="absolute bottom-16 right-0 w-80 sm:w-96 h-96 bg-white dark:bg-gray-800 rounded-lg shadow-xl flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700 backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
+        <div className="fixed bottom-20 right-4 w-80 sm:w-96 h-96 max-h-[80vh] bg-white dark:bg-gray-800 rounded-lg shadow-xl flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700 backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
           {/* Chat header */}
           <div className="bg-indigo-600 text-white px-4 py-3 flex justify-between items-center">
             <h3 className="font-medium">CountdownVibes Assistant</h3>
