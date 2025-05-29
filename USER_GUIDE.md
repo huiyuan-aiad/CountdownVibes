@@ -205,6 +205,121 @@ When creating/editing a countdown:
    - Use notes for additional event details
    - Set reminders for important events
 
+## Setting Up Firestore Security Rules
+
+**Important**: Before using Countdown Vibes in production, you must configure Firestore Security Rules to protect user data. Follow these steps to set up proper security rules in your Firebase console.
+
+### Prerequisites
+- Firebase project created
+- Firestore database initialized
+- Admin access to Firebase console
+
+### Step 1: Access Firebase Console
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Select your Countdown Vibes project
+3. Click on "Firestore Database" in the left sidebar
+
+### Step 2: Navigate to Security Rules
+1. In the Firestore Database section, click on the "Rules" tab
+2. You'll see the current security rules editor
+3. Clear any existing rules (if this is a new project)
+
+### Step 3: Implement Security Rules
+Copy and paste the following JavaScript security rules into the editor:
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can only access their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Countdowns collection - users can only access their own countdowns
+    match /countdowns/{countdownId} {
+      allow read, write, delete: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Categories collection - users can only access their own categories
+    match /categories/{categoryId} {
+      allow read, write, delete: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+```
+
+### Step 4: Publish the Rules
+1. After pasting the rules, click the "Publish" button
+2. Confirm the publication when prompted
+3. Wait for the rules to be deployed (usually takes a few seconds)
+
+### Step 5: Test the Rules (Optional)
+1. Click on the "Rules playground" tab
+2. Test different scenarios:
+   - Authenticated user accessing their own data
+   - Unauthenticated user trying to access data
+   - User trying to access another user's data
+3. Verify that only authorized operations are allowed
+
+### Understanding the Security Rules
+
+#### Authentication Requirement
+- All operations require user authentication (`request.auth != null`)
+- Unauthenticated users cannot access any data
+
+#### User Data Isolation
+- Users can only access documents where `userId` matches their authentication UID
+- Complete data isolation between different users
+
+#### Operation-Specific Rules
+- **Read/Write/Delete**: Users can perform these operations on their existing documents
+- **Create**: Users can create new documents but must set `userId` to their own UID
+
+#### Default Deny Policy
+- The final rule denies all other access patterns not explicitly allowed
+- Provides security by default
+
+### Troubleshooting Security Rules
+
+#### Permission Denied Errors
+If users experience "permission denied" errors:
+1. Verify the user is properly authenticated
+2. Check that all documents have the correct `userId` field
+3. Ensure the security rules are published correctly
+
+#### Rules Not Working
+1. Check the Firebase console for any syntax errors
+2. Verify rules are published (not just saved)
+3. Clear browser cache and try again
+
+#### Testing in Development
+For development/testing purposes only, you can temporarily use these permissive rules:
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+```
+
+**Warning**: Never use permissive rules in production!
+
 ## Troubleshooting
 
 ### Notifications Not Working
@@ -220,4 +335,10 @@ When creating/editing a countdown:
 - Try switching between month/year views
 - Refresh the page if events don't appear
 
-Need more help? Contact support or check our GitHub repository for updates. 
+### Data Not Saving/Loading
+1. Check Firestore Security Rules are properly configured
+2. Verify user authentication is working
+3. Check browser console for permission errors
+4. Ensure Firebase configuration is correct
+
+Need more help? Contact support or check our GitHub repository for updates.
